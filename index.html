@@ -1,0 +1,61 @@
+<video id="player" autoplay playsinline></video>
+<button id="capture">Capture</button>
+<button id="recognize">Recognize</button>
+<canvas id="snapshot" width=300 height=600></canvas>
+
+<div id="status"></div>
+<textarea id="textarea"></textarea>
+
+<script src="https://unpkg.com/tesseract.js@2.0.0/dist/tesseract.min.js" integrity="sha384-MTEb82ufpBJ2VCTmPZlD/+vgiT5z6zmOwqU/uDO9IobYm9xCOUEN0WH3czf6ppl8" crossorigin="anonymous"></script>
+<script>
+  var player = document.getElementById('player'); 
+  var snapshotCanvas = document.getElementById('snapshot');
+  var captureButton = document.getElementById('capture');
+  var recognizeButton = document.getElementById('recognize');
+
+  var handleSuccess = function(stream) {
+    // Attach the video stream to the video element and autoplay.
+    player.srcObject = stream;
+  };
+
+  captureButton.addEventListener('click', function() {
+    var context = snapshotCanvas.getContext('2d');
+
+    // Draw the video frame to the canvas.
+    context.drawImage(player, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+  });
+
+  recognizeButton.addEventListener('click', function() {
+    var context = snapshotCanvas.getContext('2d');
+    const status = document.getElementById('status')
+    const textarea = document.getElementById('textarea')
+
+    // Get Image and pass that to tesseract
+    // let src = context.getImageData(0, 0, snapshotCanvas.width, snapshotCanvas.height)
+
+    var img = snapshotCanvas.toDataURL("image/jpeg");
+    Tesseract.recognize(
+      img,
+      'eng',
+      {
+        logger: m => {
+          console.log(m);
+          status.innerHTML = m.status;
+        }
+      }
+    )
+    .then((result) => {
+        console.log(result);
+        textarea.value = result.data.text;
+    })
+    
+  });
+  
+  navigator.mediaDevices.getUserMedia({audio: false, video: {
+    facingMode: {
+      exact: "environment"
+    }
+  }}).then(handleSuccess);
+
+  // navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(handleSuccess);
+</script>
